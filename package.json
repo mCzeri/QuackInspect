@@ -1,0 +1,26 @@
+{
+  "name": "website-qa-tool",
+  "version": "1.0.0",
+  "description": "A QA tool to scan websites for broken links, SEO, and best practices",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "ts-node --transpile-only src/index.ts"
+  },
+  "dependencies": {
+    "axios": "^0.27.2",
+    "chalk": "^4.1.2",
+    "cheerio": "^1.0.0",
+    "csv-parse": "^5.5.6",
+    "robots-parser": "^3.0.1",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.9",
+    "@types/yargs": "^17.0.33",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.3"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

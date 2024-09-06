@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website QA Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .url-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        .url-card:hover {
+            transform: translateY(-5px);
+        }
+        .url-header {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .url-content {
+            padding: 20px;
+            display: none;
+        }
+        .issue-category {
+            margin-bottom: 15px;
+        }
+        .issue-category h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .issue-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .issue-item {
+            background-color: #ecf0f1;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 5px;
+        }
+        .success-message {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        select, input {
+            padding: 5px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 5px 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .hidden {
+            display: none;
+        }
+        .heading-structure {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .heading-icon {
+            cursor: pointer;
+            font-size: 20px;
+            margin-left: 10px;
+        }
+        .heading-tooltip {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 20px;
+            z-index: 1000;
+            max-width: 80%;
+            max-height: 80vh;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border-radius: 4px;
+        }
+        .heading-tooltip-content {
+            max-height: calc(80vh - 40px);
+            overflow-y: auto;
+            padding-right: 20px;
+        }
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 20px;
+            color: #333;
+            z-index: 1001;
+        }
+        .heading-item {
+            margin: 5px 0;
+            padding: 5px 0;
+            border-left: 2px solid #3498db;
+            padding-left: 10px;
+        }
+        .heading-level {
+            font-weight: bold;
+            margin-right: 10px;
+            min-width: 30px;
+            display: inline-block;
+        }
+        .heading-level-1 { margin-left: 0; }
+        .heading-level-2 { margin-left: 20px; }
+        .heading-level-3 { margin-left: 40px; }
+        .heading-level-4 { margin-left: 60px; }
+        .heading-level-5 { margin-left: 80px; }
+        .heading-level-6 { margin-left: 100px; }
+        .incorrect-icon {
+            color: #e74c3c;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Website QA Report</h1>
+    <div class="controls">
+        <div>
+            <select id="issueFilter">
+                <option value="all">All Issues</option>
+                <option value="seoIssues">SEO Issues</option>
+                <option value="bestPracticesIssues">Best Practices Issues</option>
+            </select>
+            <input type="text" id="urlFilter" placeholder="Filter by URL">
+            <button onclick="applyFilters()">Apply Filters</button>
+        </div>
+        <div>
+            <button onclick="expandAll()">Expand All</button>
+            <button onclick="collapseAll()">Collapse All</button>
+        </div>
+    </div>
+    <div id="summary">
+        <h2>Summary</h2>
+        <p>Total URLs scanned: <span id="totalUrls">{{TOTAL_URLS}}</span></p>
+        <p>URLs with issues: <span id="urlsWithIssues">{{URLS_WITH_ISSUES}}</span></p>
+        <p>Total issues: <span id="totalIssues">{{TOTAL_ISSUES}}</span></p>
+    </div>
+    <div id="results"></div>
+
+    <script>
+        const results = {{RESULTS}};
+        let filteredResults = results;
+
+        function createIssueList(issues) {
+            if (issues.length === 0) return '<p class="success-message">No issues found</p>';
+            return `<ul class="issue-list">${issues.map(issue => `<li class="issue-item">${issue}</li>`).join('')}</ul>`;
+        }
+
+        function renderResults() {
+            const resultsHTML = filteredResults.map(result => `
+                <div class="url-card">
+                    <div class="url-header" onclick="toggleContent(this)">
+                        ${result.url} (${result.seoIssues.length + result.bestPracticesIssues.length} issues)
+                    </div>
+                    <div class="url-content">
+                        <div class="issue-category">
+                            <h3>SEO Issues (${result.seoIssues.length})</h3>
+                            ${createIssueList(result.seoIssues)}
+                        </div>
+                        <div class="issue-category">
+                            <h3>Best Practices Issues (${result.bestPracticesIssues.length})</h3>
+                            ${createIssueList(result.bestPracticesIssues)}
+                        </div>
+                        <div class="issue-category">
+                            <h3 class="heading-structure">
+                                Heading Structure
+                                <span class="heading-icon" onclick="toggleHeadingStructure(this, '${encodeURIComponent(JSON.stringify(result.headingStructure))}')">ℹ️</span>
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('results').innerHTML = resultsHTML;
+            updateSummary();
+        }
+
+        function toggleContent(header) {
+            const content = header.nextElementSibling;
+            content.style.display = content.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function expandAll() {
+            document.querySelectorAll('.url-content').forEach(content => content.style.display = 'block');
+        }
+
+        function collapseAll() {
+            document.querySelectorAll('.url-content').forEach(content => content.style.display = 'none');
+        }
+
+        function applyFilters() {
+            const issueType = document.getElementById('issueFilter').value;
+            const urlFilter = document.getElementById('urlFilter').value.toLowerCase();
+
+            filteredResults = results.filter(result => {
+                const matchesUrl = result.url.toLowerCase().includes(urlFilter);
+                const hasIssues = (issueType === 'all') ||
+                    (issueType === 'seoIssues' && result.seoIssues.length > 0) ||
+                    (issueType === 'bestPracticesIssues' && result.bestPracticesIssues.length > 0);
+                return matchesUrl && hasIssues;
+            });
+
+            renderResults();
+        }
+
+        function updateSummary() {
+            document.getElementById('totalUrls').textContent = results.length;
+            document.getElementById('urlsWithIssues').textContent = filteredResults.length;
+            const totalIssues = filteredResults.reduce((sum, result) => 
+                sum + result.seoIssues.length + result.bestPracticesIssues.length, 0);
+            document.getElementById('totalIssues').textContent = totalIssues;
+        }
+
+        function createHeadingStructure(headings) {
+            return `
+                <div class="close-button" onclick="hideHeadingStructure(this)">✖</div>
+                <div class="heading-tooltip-content">
+                    ${headings.map(heading => `
+                        <div class="heading-item heading-level-${heading.level}">
+                            <span class="heading-level">h${heading.level}</span>
+                            ${heading.isIncorrect ? '<span class="incorrect-icon">⚠️</span>' : ''}
+                            <span>${heading.text}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function toggleHeadingStructure(icon, headingsJSON) {
+            const existingTooltip = document.querySelector('.heading-tooltip');
+            if (existingTooltip) {
+                existingTooltip.remove();
+            } else {
+                showHeadingStructure(icon, headingsJSON);
+            }
+        }
+
+        function showHeadingStructure(icon, headingsJSON) {
+            const headings = JSON.parse(decodeURIComponent(headingsJSON));
+            const tooltip = document.createElement('div');
+            tooltip.className = 'heading-tooltip';
+            tooltip.innerHTML = createHeadingStructure(headings);
+            document.body.appendChild(tooltip);
+
+            tooltip.style.display = 'block';
+
+            icon.tooltip = tooltip;
+        }
+
+        function hideHeadingStructure(element) {
+            const tooltip = element.closest('.heading-tooltip');
+            if (tooltip) {
+                tooltip.remove();
+            }
+        }
+
+        renderResults();
+    </script>
+</body>
+</html>
