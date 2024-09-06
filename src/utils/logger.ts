@@ -19,6 +19,7 @@ interface TestResult {
 
 class Logger {
   private results: TestResult[] = [];
+  private errors: string[] = [];
 
   logSuccess(message: string): void {
     console.log(chalk.green('✓') + ' ' + message);
@@ -26,6 +27,7 @@ class Logger {
 
   logError(message: string): void {
     console.log(chalk.red('✗') + ' ' + message);
+    this.errors.push(message);
   }
 
   logInfo(message: string): void {
@@ -58,6 +60,19 @@ class Logger {
   }
 
   generateHTMLReport(): void {
+    let htmlContent = '<html><body><h1>Crawl Report</h1>';
+
+    if (this.results.length === 0) {
+      htmlContent += '<p>No pages were successfully scanned.</p>';
+    }
+
+    // Usuwamy sekcję błędów z górnej części strony
+    // htmlContent += '<h2>Errors:</h2><ul>';
+    // this.errors.forEach(error => {
+    //   htmlContent += `<li>${error}</li>`;
+    // });
+    // htmlContent += '</ul>';
+
     const templatePath = path.join(__dirname, 'template.html');
     const template = fs.readFileSync(templatePath, 'utf8');
     const resultsJSON = JSON.stringify(this.results);
@@ -76,8 +91,10 @@ class Logger {
       .replace('{{URLS_WITH_ISSUES}}', urlsWithIssues.toString())
       .replace('{{TOTAL_ISSUES}}', totalIssues.toString());
 
-    fs.writeFileSync('report.html', html);
-    console.log(chalk.green('HTML report generated: report.html'));
+    htmlContent += html;
+    htmlContent += '</body></html>';
+    fs.writeFileSync('report.html', htmlContent);
+    console.log('HTML report generated: report.html');
   }
 }
 
