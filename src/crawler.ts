@@ -20,27 +20,12 @@ interface Result {
   brokenLinks: string[]; // Zawsze obecne, nawet jeśli puste
 }
 
-function isValidUrl(url: string): boolean {
-  try {
-    new URL(url);
-    return true;
-  } catch (error) {
-    return false;
-  }
-}
-
 export async function crawlWebsite(
   startUrl: string,
   singlePage: boolean = false
 ): Promise<Set<string>> {
-  if (!isValidUrl(startUrl)) {
-    logger.logError(`Invalid URL: ${startUrl}`);
-    return new Set();
-  }
-
   const visited = new Set<string>();
   const toVisit = [startUrl];
-  const baseUrl = new URL(startUrl).origin;
 
   while (toVisit.length > 0) {
     const url = toVisit.pop()!;
@@ -50,7 +35,7 @@ export async function crawlWebsite(
       visited.add(urlWithoutFragment);
       logger.logInfo(`Testing URL: ${urlWithoutFragment}`);
       try {
-        const response = await axios.get(urlWithoutFragment, { timeout: 10000 });
+        const response = await axios.get(urlWithoutFragment);
         const $ = cheerio.load(response.data);
 
         // Now result has explicit types defined, including brokenLinks
@@ -76,36 +61,24 @@ export async function crawlWebsite(
         // Add result to logger
         logger.addResult(result);
 
-        // Zmodyfikowana logika ekstrakcji linków
         if (!singlePage) {
           $("a").each((_, element) => {
             const href = $(element).attr("href");
             if (href) {
-              try {
-                const newUrl = new URL(href, urlWithoutFragment).toString().split("#")[0];
-                if (newUrl.startsWith(baseUrl) && !visited.has(newUrl) && !toVisit.includes(newUrl)) {
-                  toVisit.push(newUrl);
-                }
-              } catch (error) {
-                // Ignoruj nieprawidłowe URL-e
+              const newUrl = new URL(href, urlWithoutFragment)
+                .toString()
+                .split("#")[0];
+              if (
+                newUrl.startsWith(startUrl.split("#")[0]) &&
+                !visited.has(newUrl)
+              ) {
+                toVisit.push(newUrl);
               }
             }
           });
         }
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response) {
-          logger.logError(`Error crawling ${urlWithoutFragment}: HTTP ${error.response.status}`);
-          const result: Result = {
-            url: urlWithoutFragment,
-            seoIssues: [`HTTP Error ${error.response.status}`],
-            bestPracticesIssues: [],
-            headingStructure: [],
-            brokenLinks: [],
-          };
-          logger.addResult(result);
-        } else {
-          logger.logError(`Error crawling ${urlWithoutFragment}: ${error}`);
-        }
+        logger.logError(`Error crawling ${urlWithoutFragment}: ${error}`);
       }
     }
   }

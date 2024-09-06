@@ -1,8 +1,7 @@
 import { CheerioAPI } from "cheerio";
 import { logger } from "../utils/logger";
 
-// Dodaj eksport do HeadingStructure
-export interface HeadingStructure {
+interface HeadingStructure {
   level: number;
   text: string;
   line: number;
