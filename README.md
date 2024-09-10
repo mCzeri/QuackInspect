@@ -24,26 +24,26 @@ The tool can be run in three different modes:
 
 To scan an entire website, use the `full` mode followed by the base URL:
 
-   ```
-   npm start -- --mode full https://example.com
-   ```
+```
+npm start -- --mode full https://example.com
+```
 
 ### 2. Single Page Scan
 
 To scan a single page, use the `single` mode followed by the URL:
 
-   ```
-   npm start -- --mode single https://example.com
-   npm start -- --mode single https://cyber.pl
-   ```
+```
+npm start -- --mode single https://example.com
+npm start -- --mode single https://cyber.pl
+```
 
 ### 3. Multiple Pages Scan
 
 To scan multiple pages, use the `multiple` mode followed by the URLs separated by spaces:
 
-   ```
-   npm start -- --mode multiple https://example.com https://another-example.com
-   ```
+```
+npm start -- --mode multiple https://example.com https://another-example.com
+```
 
 # Skanowanie pojedynczego URL
 

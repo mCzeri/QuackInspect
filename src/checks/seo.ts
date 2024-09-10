@@ -20,7 +20,9 @@ export function checkSEO($: CheerioAPI, url: string): SEOResult {
   // Check for multiple h1 tags
   const h1Elements = $("h1");
   if (h1Elements.length > 1) {
-    issues.push(`Semantic Issue: Multiple h1 tags found (${h1Elements.length} h1 tags)`);
+    issues.push(
+      `Semantic Issue: Multiple h1 tags found (${h1Elements.length} h1 tags)`
+    );
     h1Elements.each((index: number, element: Element) => {
       const text = $(element).text().trim();
       $(element).text(`⚠️ ${text}`);
@@ -34,10 +36,14 @@ export function checkSEO($: CheerioAPI, url: string): SEOResult {
     const previousHeading = headingStructure[headingStructure.length - 1];
 
     if (previousHeading && level > previousHeading.level + 1) {
-      issues.push(`Semantic Issue: Incorrect heading structure: h${level} follows h${previousHeading.level}`);
+      issues.push(
+        `Semantic Issue: Incorrect heading structure: h${level} follows h${previousHeading.level}`
+      );
       headingStructure.push({ level, text, line, isIncorrect: true });
     } else if (!previousHeading && level !== 1) {
-      issues.push(`Semantic Issue: Incorrect heading structure: h${level} appears before h1`);
+      issues.push(
+        `Semantic Issue: Incorrect heading structure: h${level} appears before h1`
+      );
       headingStructure.push({ level, text, line, isIncorrect: true });
     } else {
       headingStructure.push({ level, text, line, isIncorrect: false });
@@ -50,13 +56,19 @@ export function checkSEO($: CheerioAPI, url: string): SEOResult {
     issues.push(`Meta Tags Warning: Missing title tag`);
   } else {
     if (title.length > 60) {
-      issues.push(`Meta Tags Warning: Title length should be between 50 and 60 characters`);
+      issues.push(
+        `Meta Tags Warning: Title length should be between 50 and 60 characters`
+      );
     } else if (title.length < 50) {
-      issues.push(`Meta Tags Warning: Title length should be between 50 and 60 characters`);
+      issues.push(
+        `Meta Tags Warning: Title length should be between 50 and 60 characters`
+      );
     }
     const titleDuplicates = logger.addTitle(title, url);
     if (titleDuplicates.length > 0) {
-      issues.push(`Duplicate title: "${title}" found on: ${titleDuplicates.join(', ')}`);
+      issues.push(
+        `Duplicate title: "${title}" found on: ${titleDuplicates.join(", ")}`
+      );
     }
   }
 
@@ -66,13 +78,21 @@ export function checkSEO($: CheerioAPI, url: string): SEOResult {
     issues.push(`Meta Tags Warning: Missing meta description tag`);
   } else {
     if (description.length > 160) {
-      issues.push(`Meta Tags Warning: Description length should be between 150 and 160 characters`);
+      issues.push(
+        `Meta Tags Warning: Description length should be between 150 and 160 characters`
+      );
     } else if (description.length < 150) {
-      issues.push(`Meta Tags Warning: Description length should be between 150 and 160 characters`);
+      issues.push(
+        `Meta Tags Warning: Description length should be between 150 and 160 characters`
+      );
     }
     const descriptionDuplicates = logger.addDescription(description, url);
     if (descriptionDuplicates.length > 0) {
-      issues.push(`Duplicate description: "${description}" found on: ${descriptionDuplicates.join(', ')}`);
+      issues.push(
+        `Duplicate description: "${description}" found on: ${descriptionDuplicates.join(
+          ", "
+        )}`
+      );
     }
   }
 
