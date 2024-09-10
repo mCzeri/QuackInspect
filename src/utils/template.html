@@ -46,6 +46,11 @@
             justify-content: space-between;
             align-items: center;
         }
+        .url-header a {
+            color: #fff;
+            text-decoration: none;
+            margin-left: 10px;
+        }
         .url-content {
             padding: 20px;
             display: none;
@@ -82,6 +87,11 @@
             font-size: 0.9em;
             color: #555;
             white-space: pre-line; /* Ensure new lines are respected */
+            margin-left: 20px;
+        }
+        .duplicate-urls ul {
+            margin: 0;
+            padding-left: 20px;
         }
         .success-message {
             color: #27ae60;
@@ -220,7 +230,8 @@
                 const icon = issueClass === 'warning' ? '⚠️' : '❌';
                 if (issue.includes('Duplicate title:') || issue.includes('Duplicate description:')) {
                     const [mainIssue, urls] = issue.split(' found on: ');
-                    return `<li class="issue-item ${issueClass}"><span class="icon">${icon}</span>${mainIssue}<div class="duplicate-urls">Found on: ${urls}</div></li>`;
+                    const urlList = urls.split(', ').map(url => `<li>${url}</li>`).join('');
+                    return `<li class="issue-item ${issueClass}"><span class="icon">${icon}</span>${mainIssue}<div class="duplicate-urls"><ul>${urlList}</ul></div></li>`;
                 }
                 return `<li class="issue-item ${issueClass}"><span class="icon">${icon}</span>${issue}</li>`;
             }).join('')}</ul>`;
@@ -233,6 +244,7 @@
                     <div class="url-card">
                         <div class="url-header" onclick="toggleContent(this)">
                             ${result.url}
+                            <a href="${result.url}" target="_blank">🔗</a>
                         </div>
                         <div class="url-content">
                             <div class="issue-category">
