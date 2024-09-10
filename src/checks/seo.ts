@@ -17,6 +17,12 @@ export function checkSEO($: CheerioAPI, url: string): SEOResult {
   const issues: string[] = [];
   const headingStructure: HeadingStructure[] = [];
 
+  // Check for multiple h1 tags
+  const h1Elements = $("h1");
+  if (h1Elements.length > 1) {
+    issues.push(`Semantic Issue: Multiple h1 tags found (${h1Elements.length} h1 tags)`);
+  }
+
   $("h1, h2, h3, h4, h5, h6").each((index: number, element: Element) => {
     const level = parseInt(element.tagName.substring(1), 10);
     const text = $(element).text().trim();

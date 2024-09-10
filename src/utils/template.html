@@ -250,10 +250,10 @@
                             <div class="issue-category">
                                 <h3>SEO Issues (${result.seoIssues.length})</h3>
                                 <div class="sub-category">
-                                    <h4>Semantic Issues (${result.seoIssues.filter(issue => issue.includes('heading structure')).length})
-                                        ${result.seoIssues.filter(issue => issue.includes('heading structure')).length > 0 ? `<span class="heading-icon" onclick="toggleHeadingStructure(this, '${encodeURIComponent(JSON.stringify(result.headingStructure))}')">ℹ️</span>` : ''}
+                                    <h4>Semantic Issues (${result.seoIssues.filter(issue => issue.includes('heading structure') || issue.includes('Multiple h1 tags')).length})
+                                        ${result.seoIssues.filter(issue => issue.includes('heading structure') || issue.includes('Multiple h1 tags')).length > 0 ? `<span class="heading-icon" onclick="toggleHeadingStructure(this, '${encodeURIComponent(JSON.stringify(result.headingStructure))}')">ℹ️</span>` : ''}
                                     </h4>
-                                    ${createIssueList(result.seoIssues.filter(issue => issue.includes('heading structure')))}
+                                    ${createIssueList(result.seoIssues.filter(issue => issue.includes('heading structure') || issue.includes('Multiple h1 tags')))}
                                 </div>
                                 <div class="sub-category">
                                     <h4>Meta Tags (${result.seoIssues.filter(issue => issue.includes('Meta Tags Warning') || issue.includes('Duplicate title:') || issue.includes('Duplicate description:')).length})</h4>
