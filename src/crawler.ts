@@ -66,6 +66,9 @@ export async function crawlWebsite(
         // Add result to logger
         logger.addResult(result);
 
+        // Po przetworzeniu każdego URL-a, aktualizujemy oczekiwaną liczbę URL-i
+        logger.setExpectedUrlCount(visited.size);
+
         if (!singlePage) {
           $("a").each((_, element) => {
             const href = $(element).attr("href");
@@ -86,8 +89,7 @@ export async function crawlWebsite(
     }
   }
 
-  // Generate report after processing all URLs
-  logger.generateHTMLReport();
+  // Usunięto logger.generateFinalReport();
 
   return visited;
 }
@@ -124,8 +126,7 @@ export async function crawlSinglePage(url: string): Promise<Set<string>> {
     logger.logError(`Error crawling ${normalizedUrl}: ${error}`);
   }
 
-  // Generate report after processing the URL
-  logger.generateHTMLReport();
+  // Usunięto logger.generateFinalReport();
 
   return visitedUrls;
 }
@@ -165,8 +166,7 @@ export async function crawlMultiplePages(urls: string[]): Promise<Set<string>> {
     }
   }
 
-  // Generate report after processing all URLs
-  logger.generateHTMLReport();
+  // Usunięto logger.generateFinalReport();
 
   return visitedUrls;
 }

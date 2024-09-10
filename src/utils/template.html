@@ -42,6 +42,9 @@
             font-size: 18px;
             font-weight: bold;
             cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .url-content {
             padding: 20px;
@@ -64,8 +67,23 @@
             padding: 10px;
             margin-bottom: 5px;
         }
+        .issue-item.issue {
+            background-color: #fab3b345;
+        }
+        .issue-item.warning {
+            background-color: #fae8b345;
+        }
+        .issue-item .duplicate-urls {
+            font-size: 0.9em;
+            color: #555;
+            white-space: pre-line; /* Ensure new lines are respected */
+        }
         .success-message {
             color: #27ae60;
+            font-weight: bold;
+        }
+        .error-message {
+            color: #e74c3c;
             font-weight: bold;
         }
         select, input {
@@ -148,6 +166,9 @@
             color: #e74c3c;
             margin-right: 5px;
         }
+        .sub-category {
+            margin-left: 20px;
+        }
     </style>
 </head>
 <body>
@@ -180,34 +201,47 @@
         let filteredResults = results;
 
         function createIssueList(issues) {
-            if (issues.length === 0) return '<p class="success-message">No issues found</p>';
-            return `<ul class="issue-list">${issues.map(issue => `<li class="issue-item">${issue}</li>`).join('')}</ul>`;
+            if (issues.length === 0) return '';
+            return `<ul class="issue-list">${issues.map(issue => {
+                const issueClass = issue.includes('Warning') ? 'warning' : 'issue';
+                if (issue.includes('Duplicate title:') || issue.includes('Duplicate description:')) {
+                    const [mainIssue, urls] = issue.split(' found on: ');
+                    return `<li class="issue-item ${issueClass}">${mainIssue}<div class="duplicate-urls">Found on: ${urls}</div></li>`;
+                }
+                return `<li class="issue-item ${issueClass}">${issue}</li>`;
+            }).join('')}</ul>`;
         }
 
         function renderResults() {
-            const resultsHTML = filteredResults.map(result => `
-                <div class="url-card">
-                    <div class="url-header" onclick="toggleContent(this)">
-                        ${result.url} (${result.seoIssues.length + result.bestPracticesIssues.length} issues)
+            const resultsHTML = filteredResults.map(result => {
+                const totalIssues = result.seoIssues.length + result.bestPracticesIssues.length;
+                return `
+                    <div class="url-card">
+                        <div class="url-header" onclick="toggleContent(this)">
+                            ${result.url}
+                        </div>
+                        <div class="url-content">
+                            <div class="issue-category">
+                                <h3>SEO Issues (${result.seoIssues.length})</h3>
+                                <div class="sub-category">
+                                    <h4>Semantic Issues (${result.seoIssues.filter(issue => issue.includes('heading structure')).length})
+                                        ${result.seoIssues.filter(issue => issue.includes('heading structure')).length > 0 ? `<span class="heading-icon" onclick="toggleHeadingStructure(this, '${encodeURIComponent(JSON.stringify(result.headingStructure))}')">ℹ️</span>` : ''}
+                                    </h4>
+                                    ${createIssueList(result.seoIssues.filter(issue => issue.includes('heading structure')))}
+                                </div>
+                                <div class="sub-category">
+                                    <h4>Meta Tags (${result.seoIssues.filter(issue => issue.includes('Meta Tags Warning') || issue.includes('Duplicate title:') || issue.includes('Duplicate description:')).length})</h4>
+                                    ${createIssueList(result.seoIssues.filter(issue => issue.includes('Meta Tags Warning') || issue.includes('Duplicate title:') || issue.includes('Duplicate description:')))}
+                                </div>
+                            </div>
+                            <div class="issue-category">
+                                <h3>Best Practices Issues (${result.bestPracticesIssues.length})</h3>
+                                ${createIssueList(result.bestPracticesIssues)}
+                            </div>
+                        </div>
                     </div>
-                    <div class="url-content">
-                        <div class="issue-category">
-                            <h3>SEO Issues (${result.seoIssues.length})</h3>
-                            ${createIssueList(result.seoIssues)}
-                        </div>
-                        <div class="issue-category">
-                            <h3>Best Practices Issues (${result.bestPracticesIssues.length})</h3>
-                            ${createIssueList(result.bestPracticesIssues)}
-                        </div>
-                        <div class="issue-category">
-                            <h3 class="heading-structure">
-                                Heading Structure
-                                <span class="heading-icon" onclick="toggleHeadingStructure(this, '${encodeURIComponent(JSON.stringify(result.headingStructure))}')">ℹ️</span>
-                            </h3>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
             document.getElementById('results').innerHTML = resultsHTML;
             updateSummary();

@@ -26,8 +26,6 @@ To scan an entire website, use the `full` mode followed by the base URL:
 
    ```
    npm start -- --mode full https://example.com
-
-   
    ```
 
 ### 2. Single Page Scan

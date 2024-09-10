@@ -19,6 +19,9 @@ interface TestResult {
 
 class Logger {
   private results: TestResult[] = [];
+  private titles: Map<string, string[]> = new Map(); // Store titles and their URLs
+  private descriptions: Map<string, string[]> = new Map(); // Store descriptions and their URLs
+  private expectedUrlCount: number = 0;
 
   logSuccess(message: string): void {
     console.log(chalk.green("✓") + " " + message);
@@ -34,6 +37,28 @@ class Logger {
 
   addResult(result: TestResult): void {
     this.results.push(result);
+  }
+
+  addTitle(title: string, url: string): string[] {
+    if (this.titles.has(title)) {
+      const urls = this.titles.get(title)!;
+      urls.push(url);
+      return urls.filter(u => u !== url);
+    } else {
+      this.titles.set(title, [url]);
+      return [];
+    }
+  }
+
+  addDescription(description: string, url: string): string[] {
+    if (this.descriptions.has(description)) {
+      const urls = this.descriptions.get(description)!;
+      urls.push(url);
+      return urls.filter(u => u !== url);
+    } else {
+      this.descriptions.set(description, [url]);
+      return [];
+    }
   }
 
   printSummary() {
@@ -94,6 +119,75 @@ class Logger {
     } catch (error) {
       this.logError(`Error writing report file: ${error}`);
     }
+  }
+
+  async generateFinalReport(): Promise<void> {
+    // Czekamy, aż wszystkie dane zostaną zebrane
+    await this.waitForAllData();
+    
+    // Dodajemy duplikaty do seoIssues dla każdego wyniku
+    this.addDuplicatesToResults();
+    
+    // Teraz generujemy raport
+    this.generateHTMLReport();
+  }
+
+  private addDuplicatesToResults(): void {
+    const duplicateTitles = this.getDuplicateTitles();
+    const duplicateDescriptions = this.getDuplicateDescriptions();
+
+    this.results.forEach(result => {
+      const titleDuplicates = duplicateTitles.find(d => d.urls.includes(result.url));
+      if (titleDuplicates) {
+        const duplicateTitleIssue = `Duplicate title: "${titleDuplicates.title}" found on: ${titleDuplicates.urls.join(', ')}`;
+        if (!result.seoIssues.some(issue => issue.startsWith(`Duplicate title: "${titleDuplicates.title}"`))) {
+          result.seoIssues.push(duplicateTitleIssue);
+        }
+      }
+
+      const descriptionDuplicates = duplicateDescriptions.find(d => d.urls.includes(result.url));
+      if (descriptionDuplicates) {
+        const duplicateDescriptionIssue = `Duplicate description: "${descriptionDuplicates.description}" found on: ${descriptionDuplicates.urls.join(', ')}`;
+        if (!result.seoIssues.some(issue => issue.startsWith(`Duplicate description: "${descriptionDuplicates.description}"`))) {
+          result.seoIssues.push(duplicateDescriptionIssue);
+        }
+      }
+    });
+  }
+
+  private waitForAllData(): Promise<void> {
+    return new Promise((resolve) => {
+      const checkDataComplete = () => {
+        if (this.isDataCollectionComplete()) {
+          resolve();
+        } else {
+          setTimeout(checkDataComplete, 100); // Sprawdzaj co 100ms
+        }
+      };
+      checkDataComplete();
+    });
+  }
+
+  private isDataCollectionComplete(): boolean {
+    // Tutaj dodaj logikę sprawdzającą, czy wszystkie dane zostały zebrane
+    // Na przykład, możesz sprawdzić, czy liczba wyników jest równa liczbie skanowanych URL-i
+    return this.results.length === this.expectedUrlCount;
+  }
+
+  setExpectedUrlCount(count: number): void {
+    this.expectedUrlCount = count;
+  }
+
+  getDuplicateTitles(): { title: string, urls: string[] }[] {
+    return Array.from(this.titles.entries())
+      .filter(([_, urls]) => urls.length > 1)
+      .map(([title, urls]) => ({ title, urls }));
+  }
+
+  getDuplicateDescriptions(): { description: string, urls: string[] }[] {
+    return Array.from(this.descriptions.entries())
+      .filter(([_, urls]) => urls.length > 1)
+      .map(([description, urls]) => ({ description, urls }));
   }
 }
 
