@@ -209,6 +209,12 @@
 
         function createIssueList(issues) {
             if (issues.length === 0) return '';
+            // Sort issues: errors first, then warnings
+            issues.sort((a, b) => {
+                const isWarningA = a.includes('Warning');
+                const isWarningB = b.includes('Warning');
+                return isWarningA - isWarningB;
+            });
             return `<ul class="issue-list">${issues.map(issue => {
                 const issueClass = issue.includes('Warning') ? 'warning' : 'issue';
                 const icon = issueClass === 'warning' ? '⚠️' : '❌';
