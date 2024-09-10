@@ -66,12 +66,17 @@
             border-radius: 4px;
             padding: 10px;
             margin-bottom: 5px;
+            display: flex;
+            align-items: center;
         }
         .issue-item.issue {
             background-color: #fab3b345;
         }
         .issue-item.warning {
             background-color: #fae8b345;
+        }
+        .issue-item .icon {
+            margin-right: 10px;
         }
         .issue-item .duplicate-urls {
             font-size: 0.9em;
@@ -193,6 +198,8 @@
         <p>Total URLs scanned: <span id="totalUrls">{{TOTAL_URLS}}</span></p>
         <p>URLs with issues: <span id="urlsWithIssues">{{URLS_WITH_ISSUES}}</span></p>
         <p>Total issues: <span id="totalIssues">{{TOTAL_ISSUES}}</span></p>
+        <p>Total warnings: <span id="totalWarnings">{{TOTAL_WARNINGS}}</span> ⚠️</p>
+        <p>Total errors: <span id="totalErrors">{{TOTAL_ERRORS}}</span> ❌</p>
     </div>
     <div id="results"></div>
 
@@ -204,11 +211,12 @@
             if (issues.length === 0) return '';
             return `<ul class="issue-list">${issues.map(issue => {
                 const issueClass = issue.includes('Warning') ? 'warning' : 'issue';
+                const icon = issueClass === 'warning' ? '⚠️' : '❌';
                 if (issue.includes('Duplicate title:') || issue.includes('Duplicate description:')) {
                     const [mainIssue, urls] = issue.split(' found on: ');
-                    return `<li class="issue-item ${issueClass}">${mainIssue}<div class="duplicate-urls">Found on: ${urls}</div></li>`;
+                    return `<li class="issue-item ${issueClass}"><span class="icon">${icon}</span>${mainIssue}<div class="duplicate-urls">Found on: ${urls}</div></li>`;
                 }
-                return `<li class="issue-item ${issueClass}">${issue}</li>`;
+                return `<li class="issue-item ${issueClass}"><span class="icon">${icon}</span>${issue}</li>`;
             }).join('')}</ul>`;
         }
 
@@ -280,7 +288,15 @@
             document.getElementById('urlsWithIssues').textContent = filteredResults.length;
             const totalIssues = filteredResults.reduce((sum, result) => 
                 sum + result.seoIssues.length + result.bestPracticesIssues.length, 0);
+            const totalWarnings = filteredResults.reduce((sum, result) => 
+                sum + result.seoIssues.filter(issue => issue.includes('Warning')).length +
+                result.bestPracticesIssues.filter(issue => issue.includes('Warning')).length,
+                0
+            );
+            const totalErrors = totalIssues - totalWarnings;
             document.getElementById('totalIssues').textContent = totalIssues;
+            document.getElementById('totalWarnings').textContent = totalWarnings;
+            document.getElementById('totalErrors').textContent = totalErrors;
         }
 
         function createHeadingStructure(headings) {

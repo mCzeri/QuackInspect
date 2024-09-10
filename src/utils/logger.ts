@@ -107,11 +107,22 @@ class Logger {
       0
     );
 
+    const totalWarnings = this.results.reduce(
+      (sum, result) =>
+        sum + result.seoIssues.filter(issue => issue.includes('Warning')).length +
+        result.bestPracticesIssues.filter(issue => issue.includes('Warning')).length,
+      0
+    );
+
+    const totalErrors = totalIssues - totalWarnings;
+
     const html = template
       .replace("{{RESULTS}}", resultsJSON)
       .replace("{{TOTAL_URLS}}", totalUrls.toString())
       .replace("{{URLS_WITH_ISSUES}}", urlsWithIssues.toString())
-      .replace("{{TOTAL_ISSUES}}", totalIssues.toString());
+      .replace("{{TOTAL_ISSUES}}", totalIssues.toString())
+      .replace("{{TOTAL_WARNINGS}}", totalWarnings.toString())
+      .replace("{{TOTAL_ERRORS}}", totalErrors.toString());
 
     try {
       fs.writeFileSync("report.html", html);
