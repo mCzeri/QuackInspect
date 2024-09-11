@@ -31,6 +31,7 @@ export async function crawlWebsite(
 ): Promise<Set<string>> {
   const visited = new Set<string>();
   const toVisit = [normalizeUrl(startUrl)];
+  const pageContents: Map<string, string> = new Map();
 
   while (toVisit.length > 0) {
     const url = toVisit.pop()!;
@@ -53,7 +54,7 @@ export async function crawlWebsite(
         };
 
         logger.logInfo(`Checking SEO for: ${urlWithoutFragment}`);
-        const seoResult: SEOResult = checkSEO($, urlWithoutFragment);
+        const seoResult: SEOResult = await checkSEO($, urlWithoutFragment);
         result.seoIssues = seoResult.issues;
         result.headingStructure = seoResult.headingStructure;
 
@@ -65,6 +66,12 @@ export async function crawlWebsite(
 
         // Add result to logger
         logger.addResult(result);
+
+        // Log the result for debugging
+        logger.logInfo(`Result for ${urlWithoutFragment}: ${JSON.stringify(result)}`);
+
+        // Store page content for comparison
+        pageContents.set(urlWithoutFragment, $.html());
 
         // Po przetworzeniu każdego URL-a, aktualizujemy oczekiwaną liczbę URL-i
         logger.setExpectedUrlCount(visited.size);
@@ -89,9 +96,31 @@ export async function crawlWebsite(
     }
   }
 
-  // Usunięto logger.generateFinalReport();
+  // Compare page contents for duplicates
+  comparePageContents(pageContents);
 
   return visited;
+}
+
+function comparePageContents(pageContents: Map<string, string>) {
+  const urls = Array.from(pageContents.keys());
+  for (let i = 0; i < urls.length; i++) {
+    for (let j = i + 1; j < urls.length; j++) {
+      const url1 = urls[i];
+      const url2 = urls[j];
+      const content1 = pageContents.get(url1)!;
+      const content2 = pageContents.get(url2)!;
+
+      if (areContentsSimilar(content1, content2)) {
+        logger.logError(`Duplicate content found between ${url1} and ${url2}`);
+      }
+    }
+  }
+}
+
+function areContentsSimilar(content1: string, content2: string): boolean {
+  // Simple comparison logic, can be replaced with more sophisticated algorithms
+  return content1 === content2;
 }
 
 export async function crawlSinglePage(url: string): Promise<Set<string>> {
@@ -113,7 +142,7 @@ export async function crawlSinglePage(url: string): Promise<Set<string>> {
     };
 
     logger.logInfo(`Checking SEO for: ${normalizedUrl}`);
-    const seoResult: SEOResult = checkSEO($, normalizedUrl);
+    const seoResult: SEOResult = await checkSEO($, normalizedUrl);
     result.seoIssues = seoResult.issues;
     result.headingStructure = seoResult.headingStructure;
 
@@ -122,6 +151,9 @@ export async function crawlSinglePage(url: string): Promise<Set<string>> {
 
     // Add result to logger
     logger.addResult(result);
+
+    // Log the result for debugging
+    logger.logInfo(`Result for ${normalizedUrl}: ${JSON.stringify(result)}`);
   } catch (error) {
     logger.logError(`Error crawling ${normalizedUrl}: ${error}`);
   }
@@ -152,7 +184,7 @@ export async function crawlMultiplePages(urls: string[]): Promise<Set<string>> {
       };
 
       logger.logInfo(`Checking SEO for: ${normalizedUrl}`);
-      const seoResult: SEOResult = checkSEO($, normalizedUrl);
+      const seoResult: SEOResult = await checkSEO($, normalizedUrl);
       result.seoIssues = seoResult.issues;
       result.headingStructure = seoResult.headingStructure;
 
@@ -161,6 +193,9 @@ export async function crawlMultiplePages(urls: string[]): Promise<Set<string>> {
 
       // Add result to logger
       logger.addResult(result);
+
+      // Log the result for debugging
+      logger.logInfo(`Result for ${normalizedUrl}: ${JSON.stringify(result)}`);
     } catch (error) {
       logger.logError(`Error crawling ${normalizedUrl}: ${error}`);
     }

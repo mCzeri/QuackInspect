@@ -259,6 +259,13 @@
                                     <h4>Meta Tags (${result.seoIssues.filter(issue => issue.includes('Meta Tags Warning') || issue.includes('Duplicate title:') || issue.includes('Duplicate description:')).length})</h4>
                                     ${createIssueList(result.seoIssues.filter(issue => issue.includes('Meta Tags Warning') || issue.includes('Duplicate title:') || issue.includes('Duplicate description:')))}
                                 </div>
+                                <div class="sub-category">
+                                    <h4>Canonicals (${result.seoIssues.filter(issue => issue.includes('Canonical Issue') || issue.includes('Hreflang Issue')).length})</h4>
+                                    ${createIssueList(result.seoIssues.filter(issue => issue.includes('Canonical Issue') || issue.includes('Hreflang Issue')))}
+                                    <ul class="issue-list">
+                                        ${result.hreflangUrls.map(url => `<li class="issue-item"><span class="icon">🌐</span>${url}</li>`).join('')}
+                                    </ul>
+                                </div>
                             </div>
                             <div class="issue-category">
                                 <h3>Best Practices Issues (${result.bestPracticesIssues.length})</h3>

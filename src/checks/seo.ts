@@ -1,5 +1,6 @@
 import { CheerioAPI } from "cheerio";
 import { logger } from "../utils/logger"; // Import logger to access stored titles and descriptions
+import axios from "axios";
 
 export interface HeadingStructure {
   level: number;
@@ -13,7 +14,7 @@ export interface SEOResult {
   headingStructure: HeadingStructure[];
 }
 
-export function checkSEO($: CheerioAPI, url: string): SEOResult {
+export async function checkSEO($: CheerioAPI, url: string): Promise<SEOResult> {
   const issues: string[] = [];
   const headingStructure: HeadingStructure[] = [];
 
@@ -95,6 +96,44 @@ export function checkSEO($: CheerioAPI, url: string): SEOResult {
       );
     }
   }
+
+  // Check canonical tag
+  const canonicalLink = $('link[rel="canonical"]').attr("href");
+  if (!canonicalLink) {
+    issues.push(`Canonical Issue: Missing canonical tag`);
+  } else {
+    const normalizedUrl = new URL(canonicalLink, url).toString();
+    if (normalizedUrl !== url) {
+      issues.push(`Canonical Issue: Canonical URL (${normalizedUrl}) does not match the current URL (${url})`);
+    }
+  }
+
+  // Check if the page is multilingual
+  const isMultilingual = $('link[rel="alternate"][hreflang]').length > 0;
+
+  // Check hreflang tags only if the page is multilingual
+  if (isMultilingual) {
+    const hreflangTags = $('link[rel="alternate"][hreflang]');
+    if (hreflangTags.length === 0) {
+      issues.push(`Hreflang Issue: Missing hreflang tags`);
+    } else {
+      const hreflangUrls = new Set<string>();
+      hreflangTags.each((index, element) => {
+        const hreflangUrl = $(element).attr('href');
+        if (hreflangUrl) {
+          hreflangUrls.add(hreflangUrl);
+        }
+      });
+      if (hreflangUrls.size === 0) {
+        issues.push(`Hreflang Issue: No valid hreflang URLs found`);
+      } else {
+        logger.addHreflangUrls(url, Array.from(hreflangUrls));
+      }
+    }
+  }
+
+  // Log the issues for debugging
+  logger.logInfo(`SEO issues for ${url}: ${JSON.stringify(issues)}`);
 
   return { issues, headingStructure };
 }

@@ -15,12 +15,14 @@ interface TestResult {
   seoIssues: string[];
   bestPracticesIssues: string[];
   headingStructure: HeadingStructure[];
+  hreflangUrls: string[]; // Dodajemy hreflangUrls do TestResult
 }
 
 class Logger {
   private results: TestResult[] = [];
   private titles: Map<string, string[]> = new Map(); // Store titles and their URLs
   private descriptions: Map<string, string[]> = new Map(); // Store descriptions and their URLs
+  private hreflangUrls: Map<string, string[]> = new Map(); // Store hreflang URLs
   private expectedUrlCount: number = 0;
 
   logSuccess(message: string): void {
@@ -36,6 +38,8 @@ class Logger {
   }
 
   addResult(result: TestResult): void {
+    // Dodajemy hreflangUrls do wyniku
+    result.hreflangUrls = this.hreflangUrls.get(result.url) || [];
     this.results.push(result);
   }
 
@@ -61,6 +65,10 @@ class Logger {
     }
   }
 
+  addHreflangUrls(url: string, hreflangUrls: string[]): void {
+    this.hreflangUrls.set(url, hreflangUrls);
+  }
+
   printSummary() {
     console.log("\n--- Podsumowanie ---");
     this.results.forEach((result) => {
@@ -81,6 +89,14 @@ class Logger {
       } else {
         console.log("Brak problemów z najlepszymi praktykami.");
       }
+
+      const hreflangUrls = this.hreflangUrls.get(result.url);
+      if (hreflangUrls && hreflangUrls.length > 0) {
+        console.log("Hreflang URLs:");
+        hreflangUrls.forEach((hreflangUrl) => console.log(`- ${hreflangUrl}`));
+      } else {
+        console.log("Brak hreflang URLs.");
+      }
     });
   }
 
@@ -96,21 +112,26 @@ class Logger {
 
     const resultsJSON = JSON.stringify(this.results);
 
+    // Log the results for debugging
+    this.logInfo(`Results JSON: ${resultsJSON}`);
+
     const totalUrls = this.results.length;
     const urlsWithIssues = this.results.filter(
       (result) =>
-        result.seoIssues.length + result.bestPracticesIssues.length > 0
+        (result.seoIssues && result.seoIssues.length > 0) ||
+        (result.bestPracticesIssues && result.bestPracticesIssues.length > 0)
     ).length;
     const totalIssues = this.results.reduce(
       (sum, result) =>
-        sum + result.seoIssues.length + result.bestPracticesIssues.length,
+        sum + (result.seoIssues ? result.seoIssues.length : 0) + 
+              (result.bestPracticesIssues ? result.bestPracticesIssues.length : 0),
       0
     );
 
     const totalWarnings = this.results.reduce(
       (sum, result) =>
-        sum + result.seoIssues.filter(issue => issue.includes('Warning')).length +
-        result.bestPracticesIssues.filter(issue => issue.includes('Warning')).length,
+        sum + (result.seoIssues ? result.seoIssues.filter(issue => issue.includes('Warning')).length : 0) +
+        (result.bestPracticesIssues ? result.bestPracticesIssues.filter(issue => issue.includes('Warning')).length : 0),
       0
     );
 
@@ -151,7 +172,7 @@ class Logger {
       const titleDuplicates = duplicateTitles.find(d => d.urls.includes(result.url));
       if (titleDuplicates) {
         const duplicateTitleIssue = `Duplicate title: "${titleDuplicates.title}" found on: ${titleDuplicates.urls.join(', ')}`;
-        if (!result.seoIssues.some(issue => issue.startsWith(`Duplicate title: "${titleDuplicates.title}"`))) {
+        if (result.seoIssues && !result.seoIssues.some(issue => issue.startsWith(`Duplicate title: "${titleDuplicates.title}"`))) {
           result.seoIssues.push(duplicateTitleIssue);
         }
       }
@@ -159,7 +180,7 @@ class Logger {
       const descriptionDuplicates = duplicateDescriptions.find(d => d.urls.includes(result.url));
       if (descriptionDuplicates) {
         const duplicateDescriptionIssue = `Duplicate description: "${descriptionDuplicates.description}" found on: ${descriptionDuplicates.urls.join(', ')}`;
-        if (!result.seoIssues.some(issue => issue.startsWith(`Duplicate description: "${descriptionDuplicates.description}"`))) {
+        if (result.seoIssues && !result.seoIssues.some(issue => issue.startsWith(`Duplicate description: "${descriptionDuplicates.description}"`))) {
           result.seoIssues.push(duplicateDescriptionIssue);
         }
       }
